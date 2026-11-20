@@ -6,7 +6,10 @@ namespace OBDPredictiveMaintenance.Data
     {
         public List<TelemetryRecord> Process(List<TelemetryRecord> records)
         {
-            return records.Where(IsValidRecord).OrderBy(record => record.Timestamp).ToList();
+            return records
+                .Where(IsValidRecord)
+                .OrderBy(record => record.Timestamp)
+                .ToList();
         }
 
         private static bool IsValidRecord(TelemetryRecord record)

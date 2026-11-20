@@ -16,10 +16,11 @@ namespace OBDPredictiveMaintenance.Data
             parser.SetDelimiters(",");
             parser.HasFieldsEnclosedInQuotes = true;
 
-            // Fejléc beolvasása
             string[] headers = parser.ReadFields() ?? throw new InvalidOperationException("A CSV fejléc nem olvasható.");
 
-            var columnIndexes = headers.Select((name, index) => new { name, index }).ToDictionary(x => x.name, x => x.index);
+            var columnIndexes = headers
+                .Select((name, index) => new { name, index })
+                .ToDictionary(x => x.name, x => x.index);
 
             while (!parser.EndOfData)
             {
@@ -28,7 +29,6 @@ namespace OBDPredictiveMaintenance.Data
                 if (fields == null)
                     continue;
 
-                // Csak a kiválasztott jármű adatait dolgozzuk fel
                 if (fields[columnIndexes["VEHICLE_ID"]] != vehicleId)
                     continue;
 
@@ -60,7 +60,10 @@ namespace OBDPredictiveMaintenance.Data
             if (string.IsNullOrWhiteSpace(value))
                 return null;
 
-            string normalized = value.Trim().Replace("%", "").Replace(",", ".");
+            string normalized = value
+                .Trim()
+                .Replace("%", "")
+                .Replace(",", ".");
 
             if (double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out double result))
             {

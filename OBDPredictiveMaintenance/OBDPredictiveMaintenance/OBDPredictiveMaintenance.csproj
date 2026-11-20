@@ -10,7 +10,6 @@
   <ItemGroup>
     <Folder Include="AnomalyDetection\" />
     <Folder Include="Evaluation\" />
-    <Folder Include="Testing\" />
   </ItemGroup>
 
 </Project>
