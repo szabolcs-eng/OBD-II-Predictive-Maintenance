@@ -8,8 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Data\" />
-    <Folder Include="Models\" />
     <Folder Include="AnomalyDetection\" />
     <Folder Include="Evaluation\" />
     <Folder Include="Testing\" />
