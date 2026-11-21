@@ -4,7 +4,15 @@ namespace OBDPredictiveMaintenance.AnomalyDetection
 {
     public class MadDetector
     {
-        private const double Threshold = 3.5;
+        private static readonly Dictionary<string, double> Thresholds = new()
+        {
+            ["EngineRpm"] = 3.5,
+            ["Speed"] = 3.5,
+            ["EngineCoolantTemp"] = 8.0,
+            ["EngineLoad"] = 3.5,
+            ["ThrottlePos"] = 5.0,
+            ["Maf"] = 3.5
+        };
         private const double ScalingFactor = 0.6745;
 
         public List<AnomalyResult> Detect(List<TelemetryRecord> records)
@@ -38,9 +46,13 @@ namespace OBDPredictiveMaintenance.AnomalyDetection
                 double mad = CalculateMedian(deviations);
 
                 statistics.Add((variable.Name, variable.Selector, median, mad));
+
+                Console.WriteLine($"{variable.Name}: Median = {median:F2}, MAD = {mad:F2}");
             }
 
             var results = new List<AnomalyResult>();
+
+            var variableDetectionCounts = statistics.ToDictionary(stat => stat.Name, _ => 0);
 
             for (int i = 0; i < records.Count; i++)
             {
@@ -61,8 +73,11 @@ namespace OBDPredictiveMaintenance.AnomalyDetection
                     if (score > maxScore)
                         maxScore = score;
 
-                    if (score > Threshold)
+                    if (score > Thresholds[statistic.Name])
+                    {
                         detectedVariables.Add(statistic.Name);
+                        variableDetectionCounts[statistic.Name]++;
+                    }
                 }
 
                 results.Add(new AnomalyResult
@@ -73,6 +88,15 @@ namespace OBDPredictiveMaintenance.AnomalyDetection
                     Score = maxScore,
                     DetectedVariables = detectedVariables
                 });
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Anomáliák változónként:");
+            Console.WriteLine("------------------------");
+
+            foreach (var item in variableDetectionCounts)
+            {
+                Console.WriteLine($"{item.Key}: {item.Value}");
             }
 
             return results;
