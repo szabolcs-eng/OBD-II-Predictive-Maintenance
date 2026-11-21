@@ -1,4 +1,5 @@
-﻿using OBDPredictiveMaintenance.Data;
+﻿using OBDPredictiveMaintenance.AnomalyDetection;
+using OBDPredictiveMaintenance.Data;
 using OBDPredictiveMaintenance.Testing;
 
 namespace OBDPredictiveMaintenance
@@ -15,45 +16,36 @@ namespace OBDPredictiveMaintenance
             var reader = new CsvDataReader();
             var preprocessor = new DataPreprocessor();
             var generator = new SyntheticAnomalyGenerator();
+            var detector = new MadDetector();
 
-            // 1. Adatok beolvasása
             var originalRecords = reader.ReadVehicleData(filePath, "car11");
 
-            // 2. Előfeldolgozás
             var processedRecords = preprocessor.Process(originalRecords);
 
-            // 3. Szintetikus anomáliák előállítása
             var syntheticRecords = generator.Generate(processedRecords, 100);
 
-            // 4. Eredmények
-            int anomalyCount = syntheticRecords.Count(record => record.IsAnomaly);
+            var detectionInput = syntheticRecords
+                .Select(record => record.Data)
+                .ToList();
 
-            int normalCount = syntheticRecords.Count(record => !record.IsAnomaly);
+            var detectionResults = detector.Detect(detectionInput);
 
-            Console.WriteLine($"Eredeti rekordok: {originalRecords.Count}");
-            Console.WriteLine($"Feldolgozott rekordok: {processedRecords.Count}");
+            int detectedCount = detectionResults.Count(result => result.IsAnomaly);
 
-            Console.WriteLine();
-            Console.WriteLine("Szintetikus adatok:");
-            Console.WriteLine($"Összes rekord: {syntheticRecords.Count}");
-            Console.WriteLine($"Normál rekordok: {normalCount}");
-            Console.WriteLine($"Anomáliák: {anomalyCount}");
+            Console.WriteLine($"Vizsgált rekordok: {detectionResults.Count}");
+            Console.WriteLine($"Detektált anomáliák: {detectedCount}");
 
             Console.WriteLine();
-            Console.WriteLine("Néhány mesterséges anomália:");
+            Console.WriteLine("Néhány detektált anomália:");
 
-            foreach (var record in syntheticRecords
-                .Where(record => record.IsAnomaly)
+            foreach (var result in detectionResults
+                .Where(result => result.IsAnomaly)
                 .Take(10))
             {
                 Console.WriteLine(
-                    $"{record.Data.Timestamp} | " +
-                    $"{record.AnomalyType} | " +
-                    $"RPM: {record.Data.EngineRpm} | " +
-                    $"Speed: {record.Data.Speed} | " +
-                    $"Coolant: {record.Data.EngineCoolantTemp} | " +
-                    $"Load: {record.Data.EngineLoad} | " +
-                    $"MAF: {record.Data.Maf}");
+                    $"{result.Timestamp} | " +
+                    $"Score: {result.Score:F2} | " +
+                    $"Változók: {string.Join(", ", result.DetectedVariables)}");
             }
 
             Console.ReadKey();
